@@ -77,12 +77,12 @@ public class AddSessionController implements ActionListener {
 		// String day = "1";
 		
 		// TODO Session type should be stored 
-		Date d = this.view.getDeadline();
 		
 		// Create a new session and populate its data
 		PlanningPokerSession session = new PlanningPokerSession();
 		session.setName(name);
-		session.setDeadline(d);
+		Date d = this.view.getDeadline();
+		session.setDeadline(d != null ? d : null);
 
 		// Add all checked requirements
 		// ArrayList<PlanningPokerRequirement> reqs = view.getRequirements();
