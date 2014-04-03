@@ -89,7 +89,6 @@ public class CreateSessionPanel extends JSplitPane {
 
 		// create date picker
 		deadlinePicker = new JXDatePicker();
-		deadlinePicker.setDate(Calendar.getInstance().getTime());
 		deadlinePicker.setFormats(new SimpleDateFormat("MM/dd/yyyy"));
 
 		// create time selector
@@ -97,8 +96,6 @@ public class CreateSessionPanel extends JSplitPane {
 		JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(
 				pickerDeadlineTime, "HH:mm:ss");
 		pickerDeadlineTime.setEditor(timeEditor);
-		pickerDeadlineTime.setValue(new Date()); // will only show the current
-													// time
 
 		// create textfield
 		nameTextField = new JTextField(DEFAULT_DATA_SIZE);
