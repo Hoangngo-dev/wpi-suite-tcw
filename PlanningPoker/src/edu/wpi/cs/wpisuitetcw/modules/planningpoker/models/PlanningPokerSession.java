@@ -224,7 +224,7 @@ public class PlanningPokerSession extends AbstractModel {
 	 * @return The deadline for this session.
 	 */
 	public Date getDeadline() {
-		return deadline;
+		return deadline != null ? deadline : null;
 	}
 
 	/**

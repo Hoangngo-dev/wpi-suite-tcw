@@ -91,7 +91,6 @@ public class CreateSessionPanel extends JSplitPane {
 
 		// create date picker
 		deadlinePicker = new JXDatePicker();
-		deadlinePicker.setDate(Calendar.getInstance().getTime());
 		deadlinePicker.setFormats(new SimpleDateFormat("MM/dd/yyyy"));
 
 		// create time selector
@@ -99,8 +98,6 @@ public class CreateSessionPanel extends JSplitPane {
 		JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(
 				pickerDeadlineTime, "HH:mm:ss");
 		pickerDeadlineTime.setEditor(timeEditor);
-		pickerDeadlineTime.setValue(new Date()); // will only show the current
-													// time
 
 		// create textfield
 		nameTextField = new JTextField(DEFAULT_DATA_SIZE);
@@ -163,20 +160,24 @@ public class CreateSessionPanel extends JSplitPane {
 	public Date getDeadline() {
 		Date date = deadlinePicker.getDate();
 		Date time = (Date) pickerDeadlineTime.getValue();
-		Calendar calendar1 = new GregorianCalendar();
-		Calendar calendar2 = new GregorianCalendar();
-
-		calendar1.setTime(date);
-		calendar2.setTime(time);
-
-		// adding the time to date object
-		calendar1
-				.set(Calendar.HOUR_OF_DAY, calendar2.get(Calendar.HOUR_OF_DAY));
-		calendar1.set(Calendar.MINUTE, calendar2.get(Calendar.MINUTE));
-		calendar1.set(Calendar.SECOND, calendar2.get(Calendar.SECOND));
-
-		Date deadline = calendar1.getTime();
-		return deadline;
+		// Create returned date object only when users enter date & time
+		if (date != null && time != null) {
+			Calendar calendar1 = new GregorianCalendar();
+			Calendar calendar2 = new GregorianCalendar();
+	
+			calendar1.setTime(date);
+			calendar2.setTime(time);
+	
+			// adding the time to date object
+			calendar1
+					.set(Calendar.HOUR_OF_DAY, calendar2.get(Calendar.HOUR_OF_DAY));
+			calendar1.set(Calendar.MINUTE, calendar2.get(Calendar.MINUTE));
+			calendar1.set(Calendar.SECOND, calendar2.get(Calendar.SECOND));
+	
+			Date deadline = calendar1.getTime();
+			return deadline;
+		}
+		return null;
 	}
 
 	/**
