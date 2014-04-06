@@ -157,7 +157,6 @@ public class SessionInProgressPanel extends JSplitPane {
 			@SuppressWarnings("unchecked")
 			public void mouseClicked(MouseEvent e) {
 				selectedReqName = ((JList<String>) e.getSource()).getSelectedValue();
-				System.out.println(selectedReqName);
 			}
 		});
 		
