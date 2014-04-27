@@ -1,26 +1,26 @@
 /*******************************************************************************
- * Copyright (c) 2013 -- WPI Suite
- *
+ * Copyright (c) 2014 WPI-Suite
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: Team Combat Wombat
  ******************************************************************************/
 
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.controllers.vote;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerRequirement;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerVote;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.CreateSessionPanel;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.SessionInProgressPanel;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.ViewSessionTableModel;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.session.VotePanel;
 import edu.wpi.cs.wpisuitetng.exceptions.NotImplementedException;
 import edu.wpi.cs.wpisuitetng.network.Network;
 import edu.wpi.cs.wpisuitetng.network.Request;
@@ -31,24 +31,24 @@ import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
  */
 public class GetRequirementsVotesController implements ActionListener{
 	/** The create session panel */
-	protected SessionInProgressPanel view;
+	protected VotePanel view;
 
 	/** The requirements retrieved from the server */
 	protected PlanningPokerRequirement[] data = null;
 
-	
-	//The id of the session to retrieve
+	/** The id of the session to retrieve */
 	private PlanningPokerSession session;
-	//The requirement to get votes for
+	
+	/** The requirement to get votes for */
 	private PlanningPokerRequirement req;
+	
 	/**
 	 * Constructs a new RetrieveFreePlanningPokerRequirementsController
 	 */
-	public GetRequirementsVotesController(SessionInProgressPanel view, PlanningPokerSession session) {
+	public GetRequirementsVotesController(VotePanel view, PlanningPokerSession session) {
 		this.session = session;
 		this.view = view;
 	}
-	
 
 	/**
 	 * This method is called by the
@@ -60,16 +60,14 @@ public class GetRequirementsVotesController implements ActionListener{
 	 * @throws NotImplementedException
 	 */
 	public void receivedData(PlanningPokerSession session){
-		this.req = this.session.getReqByName(this.view.getSelectedRequirement());
-		PlanningPokerRequirement r = session.getReqByName(this.req.getName());
-		//ArrayList<PlanningPokerVote> votes = new ArrayList<PlanningPokerVote>();
+		this.req = this.view.getSelectedRequirement();
+		final PlanningPokerRequirement r = session.getReqByName(this.req.getName());
 
-		System.out.println("Votes for selected requirement:");
-		for(PlanningPokerVote v : r.votes){
+		Logger.getLogger("PlanningPoker").log(Level.INFO, "Votes for selected requirement:");
+		for(PlanningPokerVote v : r.getVotes()){
 			System.out.print(v.getCardValue()+ " ");
 		}
-		System.out.println();
-		view.setVoteList(r.votes);
+		//view.setVoteList(r.votes);
 	}
 
 	/**
@@ -84,9 +82,15 @@ public class GetRequirementsVotesController implements ActionListener{
 				JOptionPane.ERROR_MESSAGE);
 	}
 
+	/**
+	 * Send a request to get the session with the same ID as this session's from the database
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		final Request request = Network.getInstance().makeRequest("planningpoker/session/".concat(String.valueOf(this.session.getID())), HttpMethod.GET);
+		final Request request = Network
+								.getInstance()
+								.makeRequest("planningpoker/session/" + this.session.getID(), 
+											 HttpMethod.GET);
 		request.addObserver(new GetRequirementsVotesRequestObserver(this));
 		request.send();
 	}

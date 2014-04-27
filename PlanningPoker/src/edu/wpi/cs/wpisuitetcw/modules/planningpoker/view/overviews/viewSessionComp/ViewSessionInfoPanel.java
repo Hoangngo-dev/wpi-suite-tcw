@@ -7,29 +7,26 @@
  * 
  * Contributors: Team Combat Wombat
  ******************************************************************************/
+
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.viewSessionComp;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.ViewSessionPanel;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.session.AddRequirementPanel;
 
-/**
- * @author troyling
- *
- */
 public class ViewSessionInfoPanel extends JPanel {
 	private final PlanningPokerSession session;
-	private final ViewSessionPanel parentPanel;
+	private final AddRequirementPanel parentPanel;
 	
-	public ViewSessionInfoPanel(ViewSessionPanel parentPanel, PlanningPokerSession session) {
+	public ViewSessionInfoPanel(AddRequirementPanel parentPanel, PlanningPokerSession session) {
 		this.parentPanel = parentPanel;
 		this.session = session;
 		
 		// create labels for data field;
-		JLabel labelName = new JLabel("Name ");
-		JLabel labelSessionName = new JLabel(this.session.getName());
+		final JLabel labelName = new JLabel("Name ");
+		final JLabel labelSessionName = new JLabel(this.session.getName());
 		
 		this.add(labelName);
 		this.add(labelSessionName);

@@ -1,16 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2013 -- WPI Suite
- *
+ * Copyright (c) 2014 WPI-Suite
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: Team Combat Wombat
  ******************************************************************************/
 
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.controllers.vote;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
 import edu.wpi.cs.wpisuitetng.network.Request;
@@ -45,13 +43,13 @@ public class GetRequirementsVotesRequestObserver implements
 	@Override
 	public void responseSuccess(IRequest iReq) {
 		// cast observable to request
-		Request request = (Request) iReq;
+		final Request request = (Request) iReq;
 
 		// get the response from the request
-		ResponseModel response = request.getResponse();
+		final ResponseModel response = request.getResponse();
 
 		if (response.getStatusCode() == 200) {
-			PlanningPokerSession session[] = PlanningPokerSession.fromJSONArray(response.getBody());
+			final PlanningPokerSession[] session = PlanningPokerSession.fromJSONArray(response.getBody());
 			controller.receivedData(session[0]);
 		} else {
 			controller.errorReceivingData("Received "

@@ -1,39 +1,32 @@
 /*******************************************************************************
- * Copyright (c) 2013 -- WPI Suite
- *
+ * Copyright (c) 2014 WPI-Suite
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
+ * 
+ * Contributors: Team Combat Wombat
  ******************************************************************************/
 
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.entitymanagers;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.List;
-import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.notifications.EmailNotifier;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.notifications.SMSNotifier;
 import edu.wpi.cs.wpisuitetng.Session;
 import edu.wpi.cs.wpisuitetng.database.Data;
 import edu.wpi.cs.wpisuitetng.exceptions.BadRequestException;
 import edu.wpi.cs.wpisuitetng.exceptions.ConflictException;
 import edu.wpi.cs.wpisuitetng.exceptions.NotFoundException;
-import edu.wpi.cs.wpisuitetng.exceptions.UnauthorizedException;
 import edu.wpi.cs.wpisuitetng.exceptions.WPISuiteException;
 import edu.wpi.cs.wpisuitetng.modules.EntityManager;
 import edu.wpi.cs.wpisuitetng.modules.Model;
-import edu.wpi.cs.wpisuitetng.modules.core.models.Role;
-import edu.wpi.cs.wpisuitetng.modules.core.models.User;
 
 /**
  * This is the entity manager for the PlanningPokerSession in the PlanningPoker
@@ -45,8 +38,6 @@ public class PlanningPokerSessionEntityManager implements
 
 	/** The database */
 	Data db;
-	String emailUsername;
-	String emailPassword;
 
 	/**
 	 * Constructs the entity manager. This constructor is called by
@@ -59,28 +50,6 @@ public class PlanningPokerSessionEntityManager implements
 	 */
 	public PlanningPokerSessionEntityManager(Data db) {
 		this.db = db;
-
-		Properties props = new Properties();
-		InputStream input = null;
-
-		try {
-			input = new FileInputStream(".planningpoker.properties");
-			props.load(input);
-
-			// set the properties value
-			emailUsername = props.getProperty("email.username", "");
-			emailPassword = props.getProperty("email.password", "");
-		} catch (IOException io) {
-			io.printStackTrace();
-		} finally {
-			if (input != null) {
-				try {
-					input.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
 	}
 
 	/*
@@ -98,11 +67,11 @@ public class PlanningPokerSessionEntityManager implements
 				.fromJson(content);
 
 		int newID;
-		PlanningPokerSession[] allSessions = this.getAll(s);
+		final PlanningPokerSession[] allSessions = this.getAll(s);
 		if (allSessions.length == 0) {
 			newID = 1;
 		} else {
-			PlanningPokerSession mostRecent = allSessions[allSessions.length - 1];
+			final PlanningPokerSession mostRecent = allSessions[allSessions.length - 1];
 			newID = mostRecent.getID() + 1;
 		}
 		newPlanningPokerSession.setID(newID);
@@ -133,7 +102,7 @@ public class PlanningPokerSessionEntityManager implements
 		// retrieving specific PlanningPokerSessions.
 		// List<Model> results = db.retrieveAll(new PlanningPokerSession(),
 		// s.getProject());
-		List<Model> results = db.retrieve(
+		final List<Model> results = db.retrieve(
 				new PlanningPokerSession().getClass(), "ID",
 				Integer.parseInt(id), s.getProject());
 		return results.toArray(new PlanningPokerSession[0]);
@@ -148,13 +117,24 @@ public class PlanningPokerSessionEntityManager implements
 	 */
 	@Override
 	public PlanningPokerSession[] getAll(Session s) throws WPISuiteException {
-		// Ask the database to retrieve all objects of the type
-		// PlanningPokerSession.
-		// Passing a dummy PlanningPokerSession lets the db know what type of
-		// object to retrieve
-		// Passing the project makes it only get messages from that project
-		List<Model> messages = db.retrieveAll(new PlanningPokerSession(),
+		final List<Model> messages = db.retrieveAll(new PlanningPokerSession(),
 				s.getProject());
+		
+		if (messages.size() == 0) {
+			System.out.println("CREATED DEFAULT.");
+			final PlanningPokerSession defaultSession = new PlanningPokerSession();
+			defaultSession.setID(1);
+			defaultSession.setName("Default Session");
+			defaultSession.setDescription("This session is for requirements that have not been assigned");
+			
+			if (db.save(defaultSession, s.getProject())) {
+				final PlanningPokerSession[] created = new PlanningPokerSession[1];
+				created[0] = defaultSession;
+				return created;
+			} else {
+				throw new WPISuiteException();
+			}
+		}
 
 		// Return the list of messages as an array
 		return messages.toArray(new PlanningPokerSession[0]);
@@ -171,7 +151,7 @@ public class PlanningPokerSessionEntityManager implements
 	public PlanningPokerSession update(Session s, String content)
 			throws WPISuiteException {
 
-		PlanningPokerSession updatedSession = PlanningPokerSession
+		final PlanningPokerSession updatedSession = PlanningPokerSession
 				.fromJson(content);
 		/*
 		 * Because of the disconnected objects problem in db4o, we can't just
@@ -179,7 +159,7 @@ public class PlanningPokerSessionEntityManager implements
 		 * db4o, copy properties from updatedPlanningPokerSession, then save the
 		 * original PlanningPokerSession again.
 		 */
-		List<Model> oldPlanningPokerSessions = db.retrieve(
+		final List<Model> oldPlanningPokerSessions = db.retrieve(
 				PlanningPokerSession.class, "id", updatedSession.getID(),
 				s.getProject());
 		if (oldPlanningPokerSessions.size() < 1
@@ -187,9 +167,9 @@ public class PlanningPokerSessionEntityManager implements
 			throw new BadRequestException(
 					"PlanningPokerSession with ID does not exist.");
 		}
-				
-		PlanningPokerSession existingSession = (PlanningPokerSession)oldPlanningPokerSessions.get(0);		
 
+		final PlanningPokerSession existingSession = (PlanningPokerSession) oldPlanningPokerSessions
+				.get(0);
 
 		// copy values to old PlanningPokerSession and fill in our changeset
 		// appropriately
@@ -254,6 +234,26 @@ public class PlanningPokerSessionEntityManager implements
 		return db.retrieveAll(new PlanningPokerSession()).size();
 	}
 
+	/**
+	 * Parses a 'command' from the first argument of the advanced GET API.
+	 * Currently, the only command supported is 'sendEmail'. This method
+	 * receives the arguments as parsed from the URL. However, advanced API core
+	 * functionality does not URL-encode the data for you.
+	 * 
+	 * sendEmail: Sends an email to 'recipient' notifying of the start or end of
+	 * a session. The arguments are:
+	 * <ul>
+	 * <li>notificationType: start or end</li>
+	 * <li>recipient: email address at which to send</li>
+	 * <li>deadline: the deadline for the planning poker session</li>
+	 * </ul>
+	 * 
+	 * @param s
+	 *            The user session
+	 * @param args
+	 *            The arguments for this get operation
+	 * @return null
+	 */
 	@Override
 	public String advancedGet(Session s, String[] args)
 			throws WPISuiteException {
@@ -261,15 +261,51 @@ public class PlanningPokerSessionEntityManager implements
 			throw new WPISuiteException("Not enough arguments.");
 		}
 
-		String command = args[2];
+		final String command = args[2];
 		if (command.equals("sendEmail")) {
-			if (args.length < 5) {
+			if (args.length < 6) {
 				throw new WPISuiteException(
-						"Usage: /sendMail/(start|end)/<redesign>/");
+						"Usage: /sendMail/(start|end)/<recipient>/<deadline>");
 			}
-			String notificationType = args[3];
-			String email = args[4];
-			sendNotification(notificationType, email);
+
+			try {
+				final String notificationType = URLDecoder.decode(args[3], "UTF-8");
+				final String email = URLDecoder.decode(args[4], "UTF-8");
+				String deadline;
+				if (args[5] == null) {
+					deadline = "";
+				} else {
+					deadline = URLDecoder.decode(args[5], "UTF-8");
+				}
+				sendEmailNotification(notificationType, email, deadline);
+			} catch (UnsupportedEncodingException e) {
+				Logger.getLogger("PlanningPoker").log(
+						Level.SEVERE,
+						"Unsupported encoding when parsing deadline for "
+								+ "sending notifications.", e);
+			}
+		} else if (command.equals("sendSMS")) {
+			if (args.length < 6) {
+				throw new WPISuiteException(
+						"Usage: /sendSMS/(start|end)/<recipient>/<deadline>");
+			}
+
+			try {
+				final String notificationType = URLDecoder.decode(args[3], "UTF-8");
+				final String buddy = URLDecoder.decode(args[4], "UTF-8");
+				String deadline;
+				if (args[5] == null) {
+					deadline = "";
+				} else {
+					deadline = URLDecoder.decode(args[5], "UTF-8");
+				}
+				sendSMSNotification(notificationType, buddy, deadline);
+			} catch (UnsupportedEncodingException e) {
+				Logger.getLogger("PlanningPoker").log(
+						Level.SEVERE,
+						"Unsupported encoding when parsing deadline for "
+								+ "sending notifications.", e);
+			}
 		}
 
 		return null;
@@ -284,60 +320,38 @@ public class PlanningPokerSessionEntityManager implements
 	@Override
 	public String advancedPost(Session s, String string, String content)
 			throws WPISuiteException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	private void sendNotification(String notificationType, String toAddress) {
-		String subject, body;
-		if (notificationType.equals("start")) {
-			subject = "Planning Poker";
-			body = "A new planning poker session has begun!";
-		} else if (notificationType.equals("end")) {
-			subject = "Planning Poker";
-			body = "A planning poker session has ended!";
-		} else {
-			return;
-		}
-		
-		
-		Properties props = new Properties();
-		props.put("mail.smtp.host", "smtp.gmail.com");
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.debug", "true");
-		props.put("mail.smtp.port", 587);
-		props.put("mail.smtp.socketFactory.port", 587);
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.transport.protocol", "smtp");
-		javax.mail.Session mailSession = null;
-		
-		mailSession = javax.mail.Session.getInstance(props,
-				new javax.mail.Authenticator() {
-					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(emailUsername,
-								emailPassword);
-					}
-				});
+	/**
+	 * Sends an email to a particular email address notifying upon start or end
+	 * of a planning poker session.
+	 * 
+	 * @param notificationType
+	 *            'start' or 'end'
+	 * @param toAddress
+	 *            The recipient address
+	 * @param deadline
+	 *            String containing the deadline.
+	 */
+	private void sendEmailNotification(String notificationType, String toAddress,
+			String deadline) {
+		EmailNotifier.sendMessage(notificationType, toAddress, deadline);
+	}
 
-		try {
-
-			Transport transport = mailSession.getTransport();
-
-			MimeMessage message = new MimeMessage(mailSession);
-
-			message.setSubject(subject);
-			message.setFrom(new InternetAddress(emailUsername));
-			String[] to = new String[] { toAddress };
-			message.addRecipient(Message.RecipientType.TO, new InternetAddress(
-					to[0]));
-			message.setContent(body, "text/html");
-			transport.connect();
-
-			transport.sendMessage(message,
-					message.getRecipients(Message.RecipientType.TO));
-			transport.close();
-		} catch (Exception exception) {
-
-		}
+	/**
+	 * Sends an SMS to a particular phone number notifying upon start or end
+	 * of a planning poker session.
+	 * 
+	 * @param notificationType
+	 *            'start' or 'end'
+	 * @param toAddress
+	 *            The recipient phone number
+	 * @param deadline
+	 *            String containing the deadline.
+	 */
+	public void sendSMSNotification(String notificationType, String phoneNumber,
+			String deadline) {
+		SMSNotifier.sendMessage(notificationType, phoneNumber, deadline);
 	}
 }

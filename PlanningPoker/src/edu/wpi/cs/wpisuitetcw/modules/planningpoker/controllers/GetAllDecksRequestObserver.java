@@ -1,4 +1,17 @@
+/*******************************************************************************
+ * Copyright (c) 2014 WPI-Suite
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: Team Combat Wombat
+ ******************************************************************************/
+
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.controllers;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerDeck;
 import edu.wpi.cs.wpisuitetng.network.RequestObserver;
@@ -6,7 +19,7 @@ import edu.wpi.cs.wpisuitetng.network.models.IRequest;
 
 public class GetAllDecksRequestObserver implements RequestObserver {
 
-	public GetAllDecksController controller;
+	private GetAllDecksController controller;
 
 	public GetAllDecksRequestObserver(GetAllDecksController controller) {
 		this.controller = controller;
@@ -22,9 +35,10 @@ public class GetAllDecksRequestObserver implements RequestObserver {
 	 */
 	@Override
 	public void responseSuccess(IRequest iReq) {
-		PlanningPokerDeck[] decks = PlanningPokerDeck.fromJSONArray(iReq
+		final PlanningPokerDeck[] decks = PlanningPokerDeck.fromJSONArray(iReq
 				.getResponse().getBody());
-		controller.receivedDecks(decks);
+		controller.updateDecks(new ArrayList<PlanningPokerDeck>(Arrays
+				.asList(decks)));
 	}
 
 	/*

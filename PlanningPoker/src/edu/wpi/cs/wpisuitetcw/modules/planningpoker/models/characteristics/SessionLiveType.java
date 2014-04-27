@@ -7,16 +7,16 @@
  * 
  * Contributors: Team Combat Wombat
  ******************************************************************************/
+
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.characteristics;
 
 /**
  * Type of a session
- * @author troyling
  *
  */
 public enum SessionLiveType {
-	LIVE("Live"),
-	DISTRIBUTED("Distributed");
+	DISTRIBUTED("Distributed"),
+	LIVE("Live");
 	
 	private final String type;
 	

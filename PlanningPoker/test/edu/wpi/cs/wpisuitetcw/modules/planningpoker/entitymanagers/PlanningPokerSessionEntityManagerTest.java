@@ -1,17 +1,14 @@
-package edu.wpi.cs.wpisuitetcw.modules.planningpoker.entitymanagers;
-
 /*******************************************************************************
- * Copyright (c) 2013 -- WPI Suite
- *
+ * Copyright (c) 2014 WPI-Suite
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *    Andrew Hurle
- *    Tyler Wack
+ * 
+ * Contributors: Team Combat Wombat
  ******************************************************************************/
+
+package edu.wpi.cs.wpisuitetcw.modules.planningpoker.entitymanagers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -23,7 +20,6 @@ import org.junit.Test;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.MockData;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.UserSessionMap;
 import edu.wpi.cs.wpisuitetng.Session;
 import edu.wpi.cs.wpisuitetng.database.Data;
 import edu.wpi.cs.wpisuitetng.exceptions.WPISuiteException;
@@ -36,12 +32,10 @@ public class PlanningPokerSessionEntityManagerTest {
 	Project testProject;
 	Session defaultSession;
 	Session defaultSession2;
-	UserSessionMap mapTest;
-	UserSessionMap mapTest2;
+
 
 	Data db;
 	PlanningPokerSessionEntityManager manager;
-	UserSessionMapEntityManager mapManager;
 
 	PlanningPokerSession session;
 	PlanningPokerSession session2;
@@ -62,37 +56,27 @@ public class PlanningPokerSessionEntityManagerTest {
 		session2 = new PlanningPokerSession();
 		session2.setID(2);
 
-		mapTest = new UserSessionMap(bob, session);
-		mapTest2 = new UserSessionMap(bob, session2);
-
+	
 		db = new MockData(new HashSet<Object>());
 		db.save(session, testProject);
 		db.save(bob, testProject);
-		db.save(mapTest, testProject);
-		db.save(mapTest2, testProject);
+
 		manager = new PlanningPokerSessionEntityManager(db);
-		mapManager = new UserSessionMapEntityManager(db);
 
 	}
 
 	@Test
 	public void testMakeEntity() throws WPISuiteException {
-		PlanningPokerSession created = manager.makeEntity(defaultSession,
+		final PlanningPokerSession created = manager.makeEntity(defaultSession,
 				session.toJSON());
 		assertEquals(2, created.getID());
 		assertSame(testProject, created.getProject());
 	}
 
-	@Test
-	public void testMakeMapEntity() throws WPISuiteException {
-		UserSessionMap[] tests = mapManager.getEntity(defaultSession, "1");
-		assertEquals(1, tests.length);
-		assertEquals("bob", tests[0].getUser().getName());
-	}
 
 	@Test
 	public void testGetEntity() throws WPISuiteException {
-		PlanningPokerSession[] sessions = manager
+		final PlanningPokerSession[] sessions = manager
 				.getEntity(defaultSession, "1");
 		assertEquals(1, sessions[0].getID());
 		assertSame(testProject, sessions[0].getProject());

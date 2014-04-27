@@ -1,40 +1,53 @@
-/**
+/*******************************************************************************
+ * Copyright (c) 2014 WPI-Suite
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  * 
- */
+ * Contributors: Team Combat Wombat
+ ******************************************************************************/
+
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.controllers;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerDeck;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.ViewEventManager;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.CreateNewDeckPanel;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.pokers.Card;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.pokers.CreateDeckPanel;
 import edu.wpi.cs.wpisuitetng.network.Network;
 import edu.wpi.cs.wpisuitetng.network.Request;
 import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
 
-public class CreateNewDeckController implements ActionListener {
-
-	private CreateNewDeckPanel view;
-
-	public CreateNewDeckController(CreateNewDeckPanel deckPanel) {
+/**
+ * Controller that creates a new deck when users click 
+ * a button that sets this controller as action listener
+ */
+public class CreateNewDeckController {
+	/** A view that exhibits the deck */
+	private CreateDeckPanel view;
+	
+	/**
+	 * Construct the controller by storing the given CreateNewDeckPanel
+	 * @param deckPanel A CreateNewDeckPanel that has the deck to be created
+	 */
+	public CreateNewDeckController(CreateDeckPanel deckPanel) {
 		this.view = deckPanel;
-
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// String deckName = this.view.getTextboxName().getText();
-
+	/**
+	 * Create a new deck based on the information in the CreateNewDeckPanel 
+	 * and store it in the database
+	 */
+	public void addDeckToDatabase() {
 		// make sure all cards are validated
-		if (validateAllInputs()) {
+		if (hasValidInputs()) {
 			// all inputs are good
-			String deckName = this.view.getTextboxName().getText();
-			ArrayList<Integer> cardValues = this.view.getAllCardsValue();
-
-			PlanningPokerDeck deck = new PlanningPokerDeck(deckName, cardValues);
+			final String deckName = this.view.getTextboxName().getText();
+			final List<Integer> cardValues = this.view.getAllCardsValue();
+			final int maxSelection = view.getMaxSelectionCards();
+			final PlanningPokerDeck deck = new PlanningPokerDeck(deckName, cardValues, maxSelection);
 
 			// send a request
 			final Request request = Network.getInstance().makeRequest(
@@ -45,30 +58,23 @@ public class CreateNewDeckController implements ActionListener {
 			request.addObserver(new AddDeckRequestObserver(this));
 			// Send the request on its way
 			request.send();
-			// System.out.println("DeckName is: " + deckName);
-			// System.out.println("Card value: " + deckName.toString());
 
 		} else {
-			// some inputs are not integer
+			// inputs are not valid
 			this.view.repaint();
 		}
 
 	}
 
-	// removes the tab
-	public void onSuccess(PlanningPokerDeck deck) {
-		// close the tab
-		ViewEventManager.getInstance().removeTab(this.view);
-	}
-
 	/**
-	 * Validate all the inputs
+	 * Validate all the inputs by avoiding java's short-circuit boolean
+	 * evaluation
 	 * 
 	 * @return true if valid; false otherwise
 	 */
-	private boolean validateAllInputs() {
-		boolean areCardsValid = validateCardValues();
-		boolean isNameEntered = this.view.isDeckNameEntered();
+	private boolean hasValidInputs() {
+		final boolean areCardsValid = hasValidCardValues();
+		final boolean isNameEntered = this.view.isDeckNameEntered();
 		return areCardsValid && isNameEntered;
 	}
 
@@ -77,12 +83,12 @@ public class CreateNewDeckController implements ActionListener {
 	 * 
 	 * @return true if so; false otherwise
 	 */
-	private boolean validateCardValues() {
+	private boolean hasValidCardValues() {
 		boolean isAllInputValid = true;
 
-		ArrayList<Card> cardList = this.view.getCardList();
-		for (Card aCard : cardList) {
-			if (!aCard.validateCardValue()) {
+		final Map<Integer, Card> cards = this.view.getCards();
+		for (Card aCard : cards.values()) {
+			if (!aCard.hasValidCardValue()) {
 				aCard.setCardInvalid();
 				isAllInputValid = false;
 			} else {
