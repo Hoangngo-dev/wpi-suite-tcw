@@ -50,13 +50,13 @@ public class SendNotificationController {
 			String sDeadline = "";
 
 			// Append date for start notifications if there was a date given
-			if (deadline != null && notificationType == "start") {
-				sDeadline += (new SimpleDateFormat("yyyy-MM-dd hh:mm"))
+			if (deadline != null && notificationType.equals("start")) {
+				sDeadline += (new SimpleDateFormat("yyyy-MM-dd hh:mma"))
 						.format(deadline);
 			}
 			// Append date for end notifications if there was a date given
-			else if (deadline != null && notificationType == "end") {
-				sDeadline += (new SimpleDateFormat("yyyy-MM-dd hh:mm"))
+			else if (deadline != null && notificationType.equals("end")) {
+				sDeadline += (new SimpleDateFormat("yyyy-MM-dd hh:mma"))
 						.format(deadline);
 			}
 

@@ -15,6 +15,8 @@ import java.util.List;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.stash.SessionStash;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.ViewEventManager;
+import edu.wpi.cs.wpisuitetng.modules.requirementmanager.controller.GetRequirementsController;
+import edu.wpi.cs.wpisuitetng.modules.requirementmanager.view.ViewEventController;
 import edu.wpi.cs.wpisuitetng.network.Network;
 import edu.wpi.cs.wpisuitetng.network.Request;
 import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
@@ -34,6 +36,9 @@ public class GetAllSessionsController {
 	 */
 	private GetAllSessionsController() {}
 
+	/**
+	 * @return The singleton instance for this controller.
+	 */
 	public static GetAllSessionsController getInstance() {
 		if (instance == null) {
 			instance = new GetAllSessionsController();
@@ -49,6 +54,15 @@ public class GetAllSessionsController {
 	public void receivedSessions(List<PlanningPokerSession> sessions) {
 		SessionStash.getInstance().mergeFromServer(sessions);
 		ViewEventManager.getInstance().getOverviewTreePanel().refresh();
+		ViewEventManager.getInstance().getOverviewTreePanel().initTreeStates();
+		//Assures that the req manager table is updated when pp starts up. This should fix the "wrong ID" bug.
+		GetRequirementsController.getInstance().retrieveRequirements();
+		ViewEventController.getInstance().refreshTable();
+		ViewEventController.getInstance().refreshTree();
+		
+		System.out.println("the tree has been refreshed");
+		
+		
 	}
 
 	/**

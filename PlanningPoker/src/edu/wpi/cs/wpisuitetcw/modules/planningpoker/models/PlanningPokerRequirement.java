@@ -10,6 +10,8 @@
 
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.models;
 
+import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -80,6 +82,7 @@ public class PlanningPokerRequirement extends AbstractModel {
 		id = UUID.randomUUID();
 		innerRequirement = requirement;
 		this.sessionID = sessionID;
+		this.finalEstimate = 0;
 	}
 
 	/**
@@ -104,14 +107,22 @@ public class PlanningPokerRequirement extends AbstractModel {
 	/**
 	 * @return The mean of the values of all the votes.
 	 */
-	public int getMean() {
+	public double getMean() {
 		int total = 0;
 		int num = 0;
+		double mean;
+		if(votes.isEmpty()){
+			return 0;
+		}
+		DecimalFormat df = new DecimalFormat("#.#");
 		for (PlanningPokerVote v : votes) {
 			total += v.getCardValue();
 			num++;
 		}
-		return (total / num);
+		mean = (total / num);
+		mean  = Double.parseDouble(df.format(mean));
+		
+		return mean;
 	}
 
 	/**
@@ -119,6 +130,9 @@ public class PlanningPokerRequirement extends AbstractModel {
 	 */
 	public int getMedian() {
 		final int size = votes.size();
+		if( size == 0){
+			return size;
+		}
 		final int[] numList = new int[votes.size()];
 		for (int i = 0; i < votes.size(); i++) {
 			numList[i] = votes.get(i).getCardValue();
@@ -130,6 +144,7 @@ public class PlanningPokerRequirement extends AbstractModel {
 		} else {
 			median = (numList[size / 2] + numList[(size / 2) - 1]) / 2;
 		}
+		
 		return median;
 	}
 
@@ -139,6 +154,9 @@ public class PlanningPokerRequirement extends AbstractModel {
 	public int getMode() {
 		final int[] numList = new int[votes.size()];
 		int max, temp, mode;
+		if(votes.size() == 0){
+			return 0;
+		}
 		for (int i = 0; i < votes.size(); i++) {
 			numList[i] = votes.get(i).getCardValue();
 		}
@@ -156,6 +174,47 @@ public class PlanningPokerRequirement extends AbstractModel {
 			}
 		}
 		return mode;
+	}
+	/**
+	 * To calculate the standard deviation, find the sqrt of the variance of the data.
+	 * @param mean
+	 * @return Standard deviation of votes
+	 */
+	public double calculateStandardDeviation(double mean){
+		double variance, stndDev;
+		DecimalFormat df = new DecimalFormat("#.#");
+		
+		if(mean == 0){
+			return mean;
+		}
+		
+		variance  = calculateVariance(mean);
+		stndDev = Math.sqrt(variance);
+		
+		stndDev = Double.parseDouble(df.format(stndDev));
+		
+		return stndDev;
+		
+	}
+	
+	/**
+	 * Calculates the variance of vote requirements. To calculate variance, find the average of each sample of data 
+	 * subtracted by the mean.
+	 * @param mean
+	 * @return the variance of all requirement votes for this session
+	 */
+	public double calculateVariance(double mean){
+		double variance;
+		int numOfVotes;
+		variance = numOfVotes = 0;
+		
+		for (PlanningPokerVote v : votes) {
+			variance += Math.pow((v.getCardValue() - mean), 2);
+			numOfVotes++;
+		}
+		variance = (variance / (numOfVotes));
+		return variance;
+		
 	}
 
 	/**
@@ -475,7 +534,7 @@ public class PlanningPokerRequirement extends AbstractModel {
 	 * @param ID
 	 */
 	public void setCorrespondingReqManagerID(int ID){
-		this.correspondingReqManagerID = ID;
+		correspondingReqManagerID = ID;
 	}
 	
 	/**
@@ -483,6 +542,6 @@ public class PlanningPokerRequirement extends AbstractModel {
 	 * @return The ID of the PPreq that corresponds with the requirement manager requirement.
 	 */
 	public int getCorrespondingReqManagerID(){
-		return this.correspondingReqManagerID;
+		return correspondingReqManagerID;
 	}
 }

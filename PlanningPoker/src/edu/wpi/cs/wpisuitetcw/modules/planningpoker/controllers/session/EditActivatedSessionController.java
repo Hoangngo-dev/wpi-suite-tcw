@@ -35,6 +35,7 @@ public class EditActivatedSessionController implements ActionListener{
 										  VotePanel panel) {
 		this.panel = panel;
 		this.session = session;
+		session.setEditMode(true);
 	}
 
 	/**
@@ -42,9 +43,9 @@ public class EditActivatedSessionController implements ActionListener{
 	 * show the panel to edit the recently deactivated session
 	 */
 	public void passBackToNewSession() {
-		this.session.deactivate();
-		ViewEventManager.getInstance().removeTab(this.panel);
-		ViewEventManager.getInstance().editSession(this.session);
+		session.deactivate();
+		ViewEventManager.getInstance().removeTab(panel);
+		ViewEventManager.getInstance().editSession(session);
 	}
 
 	/**

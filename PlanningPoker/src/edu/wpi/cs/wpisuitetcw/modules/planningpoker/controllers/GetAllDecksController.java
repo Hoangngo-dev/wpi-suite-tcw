@@ -12,6 +12,8 @@ package edu.wpi.cs.wpisuitetcw.modules.planningpoker.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerDeck;
 import edu.wpi.cs.wpisuitetng.exceptions.WPISuiteException;
@@ -24,18 +26,27 @@ import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
  * from the database
  */
 public class GetAllDecksController {
+	/** constans */
+	private static final String CREATE_DECK = "Create deck";
+	private static final String DEFAULT_DECK = "Default";
+	private static final String NO_DECK = "No deck";
+	
 	/** A list of PlanningPokerDeck */
 	private List<PlanningPokerDeck> decks = null;
 
 	/** An instance of this controller */
 	private static GetAllDecksController instance = null;
 
+	/**
+	 * Constructs a controller to get all decks. Private because it's a singleton.
+	 */
 	private GetAllDecksController() {
 	}
 
 	/**
 	 * Instantiates a new controller tied to the specified view. Private because
 	 * this is a singleton.
+	 * @return GetAllDecksController instance
 	 */
 	public static GetAllDecksController getInstance() {
 		if (instance == null) {
@@ -60,7 +71,6 @@ public class GetAllDecksController {
 	 * dropdown of the CreateNewSessionPanel
 	 * @return Returns an array list of all the names 
 	 * of the available decks in the database
-	 * @throws InterruptedException
 	 */
 	public List<String> getAllDeckNames() {
 		this.refreshDecks(); // set up the deck
@@ -71,16 +81,18 @@ public class GetAllDecksController {
 		try {
 			Thread.sleep(250);
 		} catch (InterruptedException e) {
+			Logger.getLogger("GetAllDecksController").log(Level.INFO,
+					"Could get the name for all decks", e);
 		}
 		
 		// Default options
-		deckNames.add("Default");
-		deckNames.add("Create new deck");
-		deckNames.add("No deck");
+		deckNames.add(DEFAULT_DECK);
+		deckNames.add(CREATE_DECK);
+		deckNames.add(NO_DECK);
 
 		// make sure the decks is not null
 		if (decks != null) {
-			for (PlanningPokerDeck deck : this.decks) {
+			for (PlanningPokerDeck deck : decks) {
 				deckNames.add(deck.getDeckName());
 			}
 		}
@@ -106,7 +118,7 @@ public class GetAllDecksController {
 	public PlanningPokerDeck getDeckByName(String deckName)
 			throws WPISuiteException {
 		for (PlanningPokerDeck d : decks) {
-			if (d.getDeckName() == deckName) {
+			if (d.getDeckName().equals(deckName)) {
 				return d;
 			}
 		}

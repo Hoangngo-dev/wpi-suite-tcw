@@ -17,11 +17,9 @@ import java.util.List;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerRequirement;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.viewSessionComp.ViewSessionReqPanel;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.stash.SessionStash;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.session.tabs.SessionRequirementPanel;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.tablemanager.RequirementTableManager;
-import edu.wpi.cs.wpisuitetng.network.Network;
-import edu.wpi.cs.wpisuitetng.network.Request;
-import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
 
 
 /**
@@ -31,7 +29,7 @@ import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
 public class MoveAllRequirementsToCurrentSessionController implements ActionListener {
 
 	private PlanningPokerSession session = null;
-	private ViewSessionReqPanel view;
+	private SessionRequirementPanel view;
 	
 	/**
 	 * Construct the MoveAllRequirementsToAllController by storing the given
@@ -39,9 +37,9 @@ public class MoveAllRequirementsToCurrentSessionController implements ActionList
 	 * @param s A PlanningPokerSession that would be stored
 	 * @param v A ViewSessionReqPanel that would be stored
 	 */
-	public MoveAllRequirementsToCurrentSessionController(PlanningPokerSession s, ViewSessionReqPanel v) {
-		this.session = s;
-		this.view = v;
+	public MoveAllRequirementsToCurrentSessionController(PlanningPokerSession s, SessionRequirementPanel v) {
+		session = s;
+		view = v;
 	}
 
 	/**
@@ -51,26 +49,27 @@ public class MoveAllRequirementsToCurrentSessionController implements ActionList
 	public void receivedData(PlanningPokerSession s){
 		PlanningPokerRequirement r;
 		
-		for(String a : this.view.getAllLeftRequirements()){
+		for(String a : view.getAllLeftRequirements()){
 				r = s.getReqByName(a);
 				List<PlanningPokerRequirement> d = new ArrayList<PlanningPokerRequirement>();
 				d.add(r);
 				s.deleteRequirements(d);
 				session.addRequirement(r);
 		}
-
-		s.save();
-		session.save();
 		
 		final RequirementTableManager a1 = new RequirementTableManager();
 		a1.refreshRequirements(1, s.getRequirements());
 		final RequirementTableManager a2 = new RequirementTableManager();
 		a2.refreshRequirements(session.getID(), session.getRequirements());
-		this.view.getAllReqTable().repaint();
-		this.view.getSessionReqTable().repaint();
 
-		view.validateActivateSession();
-		this.view.refreshMoveButtons();
+		s.save();
+		session.save();
+		
+		view.getAllReqTable().repaint();
+		view.getSessionReqTable().repaint();
+
+		view.validateOpenSession();
+		view.refreshMoveButtons();
 	}
 	
 	/*
@@ -81,8 +80,7 @@ public class MoveAllRequirementsToCurrentSessionController implements ActionList
 	 */
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		final Request request = Network.getInstance().makeRequest("planningpoker/session/1", HttpMethod.GET);
-		request.addObserver(new MoveAllRequirementsToCurrentRequestObserver(this));
-		request.send();
+		view.clearSelection();
+		receivedData(SessionStash.getInstance().getDefaultSession());
 	}
 }

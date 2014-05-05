@@ -41,7 +41,7 @@ public class AddVoteController implements ActionListener {
 
 	/**
 	 * Construct the controller
-	 * @param view The SessionInProgressPanel
+	 * @param voteView The SessionInProgressPanel
 	 * @param session A PlanningPokerSession 
 	 * whose PlanningPokerRequirement has a new vote
 	 */
@@ -60,16 +60,20 @@ public class AddVoteController implements ActionListener {
 		session = voteView.getSession();
 
 		// Terminate voting process if the session is not active
-		if (!session.isActive()) return;
+		if (!session.isActive())
+			return;
 		
 		// Get the requirement that has been selected from VotePanel
 		try {
-			this.req = voteView.getRequirementList().getSelectedValue();
+			req = voteView.getRequirementList().getSelectedValue();
 		} catch (NullPointerException e) {
 			Logger.getLogger("PlanningPoker").log(Level.WARNING,
 					"Could not find requirement by name", e);
 			return;
 		}
+		
+		if (voteView.getVote() == -1) // Garbage value
+			return;
 
 		// checking list of votes to see if user has already voted
 		final List<PlanningPokerVote> toRemove = new ArrayList<PlanningPokerVote>();
@@ -78,7 +82,7 @@ public class AddVoteController implements ActionListener {
 		final Configuration c = ConfigManager.getConfig();
 		final String username = c.getUserName();
 		
-		for (PlanningPokerVote v : this.req.getVotes()) {
+		for (PlanningPokerVote v : req.getVotes()) {
 			if (v.getUser().equals(username)) {
 				toRemove.add(v);
 			}
@@ -89,7 +93,9 @@ public class AddVoteController implements ActionListener {
 		}
 		
 		// Add vote to the requirement
-		final PlanningPokerVote vote = new PlanningPokerVote(username, voteView.getVote());
+		int voteValue = voteView.getVote();
+		
+		final PlanningPokerVote vote = new PlanningPokerVote(username, voteValue);
 		session.addVoteToRequirement(req, vote, username);
 
 		session.setHasVoted(true);
@@ -112,8 +118,10 @@ public class AddVoteController implements ActionListener {
 		
 		// Update the vote panel
 		updateVoteIcon();
-		this.voteView.setVoteTextFieldWithValue(vote.getCardValue());
-		this.voteView.updateUI();
+		voteView.getVoteTextField().setTextBottom("");
+		voteView.setVoteTextFieldWithValue(vote.getCardValue());
+		voteView.advanceInList();
+		voteView.updateUI();
 	}
 
 	/*

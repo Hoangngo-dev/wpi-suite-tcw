@@ -19,6 +19,7 @@ import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.stash.SessionStash;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.ViewEventManager;
 import edu.wpi.cs.wpisuitetng.modules.requirementmanager.models.Requirement;
+import edu.wpi.cs.wpisuitetng.modules.requirementmanager.view.ViewEventController;
 import edu.wpi.cs.wpisuitetng.network.Network;
 import edu.wpi.cs.wpisuitetng.network.Request;
 import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
@@ -38,6 +39,9 @@ public class GetAllRequirementsController {
 	 */
 	private GetAllRequirementsController() {}
 
+	/**
+	 * @return The instance of the controller.
+	 */
 	public static GetAllRequirementsController getInstance() {
 		if (instance == null) {
 			instance = new GetAllRequirementsController();
@@ -47,7 +51,7 @@ public class GetAllRequirementsController {
 	
 	/**
 	 * Add the given list of requirements to the SessionStash
-	 * @param sessions A list of Requirements that would be
+	 * @param requirements A list of Requirements that would be
 	 * added to SessionStash
 	 */
 	public void receivedRequirements(List<Requirement> requirements) {

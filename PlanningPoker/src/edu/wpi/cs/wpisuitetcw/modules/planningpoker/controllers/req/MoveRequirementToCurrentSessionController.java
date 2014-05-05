@@ -17,11 +17,9 @@ import java.util.List;
 
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerRequirement;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerSession;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.overviews.viewSessionComp.ViewSessionReqPanel;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.stash.SessionStash;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.session.tabs.SessionRequirementPanel;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.tablemanager.RequirementTableManager;
-import edu.wpi.cs.wpisuitetng.network.Network;
-import edu.wpi.cs.wpisuitetng.network.Request;
-import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
 
 /**
  * This controller adds all the requirements to the specified session
@@ -30,7 +28,7 @@ import edu.wpi.cs.wpisuitetng.network.models.HttpMethod;
 public class MoveRequirementToCurrentSessionController implements ActionListener {
 
 	private PlanningPokerSession session = null;
-	private ViewSessionReqPanel view;
+	private SessionRequirementPanel view;
 
 	/**
 	 * Construct the MoveAllRequirementsToAllController by storing the given
@@ -38,9 +36,9 @@ public class MoveRequirementToCurrentSessionController implements ActionListener
 	 * @param s A PlanningPokerSession that would be stored
 	 * @param v A ViewSessionReqPanel that would be stored
 	 */
-	public MoveRequirementToCurrentSessionController(PlanningPokerSession s, ViewSessionReqPanel v) {
-		this.session = s;
-		this.view = v;
+	public MoveRequirementToCurrentSessionController(PlanningPokerSession s, SessionRequirementPanel v) {
+		session = s;
+		view = v;
 	}
 
 	/**
@@ -50,7 +48,7 @@ public class MoveRequirementToCurrentSessionController implements ActionListener
 	public void receivedData(PlanningPokerSession s){
 		PlanningPokerRequirement r;
 		
-		for(String a : this.view.getLeftSelectedRequirements()){
+		for(String a : view.getLeftSelectedRequirements()){
 				r = s.getReqByName(a);
 				List<PlanningPokerRequirement> d = new ArrayList<PlanningPokerRequirement>();
 				d.add(r);
@@ -58,18 +56,19 @@ public class MoveRequirementToCurrentSessionController implements ActionListener
 				session.addRequirement(r);	
 		}
 		
-		s.save();
-		session.save();
-		
 		final RequirementTableManager a1 = new RequirementTableManager();
 		a1.refreshRequirements(1, s.getRequirements());
 		final RequirementTableManager a2 = new RequirementTableManager();
 		a2.refreshRequirements(session.getID(), session.getRequirements());
-		this.view.getAllReqTable().repaint();
-		this.view.getSessionReqTable().repaint();
+		
+		s.save();
+		session.save();
+		
+		view.getAllReqTable().repaint();
+		view.getSessionReqTable().repaint();
 
-		view.validateActivateSession();
-		this.view.refreshMoveButtons();
+		view.validateOpenSession();
+		view.refreshMoveButtons();
 	}
 	
 	/*
@@ -80,8 +79,7 @@ public class MoveRequirementToCurrentSessionController implements ActionListener
 	 */
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		final Request request = Network.getInstance().makeRequest("planningpoker/session/1", HttpMethod.GET);
-		request.addObserver(new MoveRequirementToCurrentSessionRequestObserver(this));
-		request.send();
+		receivedData(SessionStash.getInstance().getDefaultSession());
+		view.clearSelection();
 	}
 }

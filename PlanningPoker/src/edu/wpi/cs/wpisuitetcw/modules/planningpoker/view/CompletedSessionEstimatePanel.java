@@ -11,105 +11,58 @@
 package edu.wpi.cs.wpisuitetcw.modules.planningpoker.view;
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
 
+import net.miginfocom.swing.MigLayout;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerRequirement;
-import edu.wpi.cs.wpisuitetcw.modules.planningpoker.models.PlanningPokerVote;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.UIComponent.StatsTable;
+import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.UIComponent.textfield.LabelsWithTextField;
 import edu.wpi.cs.wpisuitetcw.modules.planningpoker.view.session.VotePanel;
-import edu.wpi.cs.wpisuitetng.modules.requirementmanager.controller.UpdateRequirementController;
-import edu.wpi.cs.wpisuitetng.modules.requirementmanager.models.Requirement;
+import edu.wpi.cs.wpisuitetng.janeway.config.ConfigManager;
 import edu.wpi.cs.wpisuitetng.modules.requirementmanager.models.RequirementModel;
-import edu.wpi.cs.wpisuitetng.modules.requirementmanager.view.ViewEventController;
 
+/**
+ * CompletedSessionEstimatePanel has a card for final estimation
+ * and a table exhibits the stats of a requirement 
+ * (mean, mode, median, and standard deviation)
+ */
 public class CompletedSessionEstimatePanel extends JPanel {
 
-	// private final JPanel pnlCompletedSession;
-	
-	//The panel that the final estimate panel is placed in.
+	// The panel that the final estimate panel is placed in.
 	private final VotePanel parentPanel;
+
+//	/** A background for a card */
+//	// TODO create GUi component for this
+//	private ImagePanel finalEstimateCard;
+//	
+//	// text field that takes the final estimate given by the owner of a session.
+//	// TODO create GUi component for this
+//	private JTextField finalEstimateField;
+//	
+//	// Header for the final estimate panel.
+//	// TODO move this into GUI component above
+//	private final JLabel lblFinalEstimate;
 	
-	// The GridLayout that holds the stats panel, vote panel, and final estimate panel.
-	private final GridLayout panelLayout;
+	/** Card for final estimation */
+	private LabelsWithTextField card;
 	
-	// Panel that displays the final estimate text box and submission button
-	private final JPanel pnlFinalEstimate;
-	
-	// Panel that displays the stats of a requirement.
-	private final JPanel pnlStats;
-	
-	// Panel that displays a table of users and their votes for a requirement.
-	private final JPanel pnlVotes;
-	
-	// Header for the votes panel.
-	private final JLabel lblVotes;
-	
-	// Header for the stats panel.
-	private final JLabel lblStats;
-	
-	// Header for the final estimate panel.
-	private final JLabel lblFinalEstimate;
-	
-	// Label of the Mean text field.
-	private final JLabel lblMean;
-	
-	// Label of the Median text field.
-	private final JLabel lblMedian;
-	
-	// Label of the Mode text field.
-	private final JLabel lblMode;
-	
-	// Holds the model to populate the Votes table.
-	private DefaultTableModel tableModel;
-	
-	// Table that displays users and their votes for a requirement.
-	private JTable tblVotes;
-	
-	// text field that displays the mean for a requirements votes.
-	private JTextField statsMean;
-	
-	// text field that displays the median of a requirements votes.
-	private JTextField statsMedian;
-	
-	// text field that displays the mode of a requirements votes.
-	private JTextField statsMode;
-	
-	// text field that takes the final estimate given by the owner of a session.
-	private JTextField finalEstimateField;
-	
-	// The font to be used for headers in this panel.
-	private final Font headerFont;
-	
-	// the font used for statistical labels
-	private final Font statNameFont;
-	
-	// Button to submit the final estimation.
-	private final JButton btnFinalEstimate;
+	/** Stats table */
+	private StatsTable statsTable;
 	
 	// The requirement that has been chosen for analysis and estimation
 	private PlanningPokerRequirement focusedRequirement = null;
-	
-	// Headers for the tblVotes JTable.
-	private static final Object[] voteTableColHeaders = { "User", "Vote" };
-	
+
 	// The Requirement Manager requirement Model.
 	private RequirementModel reqManagerRequirementModel;
 
@@ -118,62 +71,39 @@ public class CompletedSessionEstimatePanel extends JPanel {
 	 * 
 	 * @param parentPanel
 	 *            The parent panel containing this panel.
+	 * @throws IOException
 	 */
-	public CompletedSessionEstimatePanel(
-			final VotePanel parentPanel) {
+	@SuppressWarnings("serial")
+	public CompletedSessionEstimatePanel(final VotePanel parentPanel) {
 		this.parentPanel = parentPanel;
-		
-		// Create a new grid layout that is 3 columns across.
-		panelLayout = new GridLayout(0, 3);
-		
-		// Set the reqManagerRequirementModel field equal to the Instance of the Requirement Model;
+
+		// Set the reqManagerRequirementModel field equal to the Instance of the
+		// Requirement Model;
 		reqManagerRequirementModel = RequirementModel.getInstance();
+
+		// Create a card
+		BufferedImage background;
+		try {
+			background = ImageIO.read(getClass().getResource("new_card.png"));
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot read the background image new_card.png");
+		}
+		card = new LabelsWithTextField(background);
+		card.removeTop();
+		card.setTextBottom("<html><font color='#3399FF'><b>&nbsp;&nbsp;Final estimation<b></html>");
+		
+		String currentUserName = ConfigManager.getConfig().getUserName();
+		
+		if (!currentUserName.equals(parentPanel.getSession().getOwnerUserName())) // Not Owner
+			card.getTextField().setEditable(false);
+
+		
+		// Set default small text "Final estimation"
+		// Enlarge the font when user clicks in
+		//setToggleFontSize(card);
 		
 
-		/*
-		 * Create and set up the 3 panels used to create the CompletedSession
-		 * Panel
-		 */
-		// Used to make the final estimate
-		this.setLayout(panelLayout);
-		pnlFinalEstimate = new JPanel();
-		pnlFinalEstimate.setLayout(new BoxLayout(pnlFinalEstimate,
-				BoxLayout.Y_AXIS));
-		pnlFinalEstimate.setBorder(BorderFactory.createLineBorder(Color.black));
-
-		// Statistical info of the PP Session
-		pnlStats = new JPanel();
-		pnlStats.setLayout(new BoxLayout(pnlStats, BoxLayout.Y_AXIS));
-		pnlStats.setBorder(BorderFactory.createLineBorder(Color.black));
-
-		// Table of votes for each req
-		pnlVotes = new JPanel();
-		pnlVotes.setLayout(new BoxLayout(pnlVotes, BoxLayout.Y_AXIS));
-		pnlVotes.setBorder(BorderFactory.createLineBorder(Color.black));
-
-		// Initialize the default font for JLabel headers
-		headerFont = new Font("TimesRoman", Font.BOLD, 25);
-
-		// Initialize the Headers for the panels.
-		lblVotes = new JLabel("Votes");
-		lblVotes.setFont(headerFont);
-		lblVotes.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-		lblStats = new JLabel("Stats");
-		lblStats.setFont(headerFont);
-		lblStats.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-		lblFinalEstimate = new JLabel("Final Estimate");
-		lblFinalEstimate.setFont(headerFont);
-		lblFinalEstimate.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-		// Create the Final Estimate Panel
-		finalEstimateField = new JTextField(3);
-		finalEstimateField.setFont(new Font("TimeRoman", Font.BOLD, 30));
-		finalEstimateField
-				.setMaximumSize(finalEstimateField.getPreferredSize());
-		finalEstimateField.setAlignmentX(Component.CENTER_ALIGNMENT);
-		finalEstimateField.getDocument().addDocumentListener(
+		card.getTextField().getDocument().addDocumentListener(
 				new DocumentListener() {
 					public void changedUpdate(DocumentEvent e) {
 						warn();
@@ -189,160 +119,72 @@ public class CompletedSessionEstimatePanel extends JPanel {
 
 					public void warn() {
 						try {
-							Integer.parseInt(finalEstimateField.getText());
-							btnFinalEstimate.setEnabled(true);
+							Integer.parseInt(card.getTextField().getText());
+							parentPanel.getSubmitFinalEstimationButton()
+									.setEnabled(true);
 						} catch (NumberFormatException n) {
-							btnFinalEstimate.setEnabled(false);
+							parentPanel.getSubmitFinalEstimationButton()
+									.setEnabled(false);
 						}
 					}
 				});
 
-		final Component verticalStrut = Box.createVerticalStrut(50);
-
-		btnFinalEstimate = new JButton("Submit Final Estimation");
-		btnFinalEstimate.setAlignmentX(Component.CENTER_ALIGNMENT);
-		// btnFinalEstimate.setEnabled(false);
-
-		btnFinalEstimate.addActionListener(new ActionListener() {
-
+		card.getTextField().addKeyListener(new KeyListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				final PlanningPokerRequirement focusedReq = CompletedSessionEstimatePanel.this
-						.getFocusedRequirement();
-				final int estimate = CompletedSessionEstimatePanel.this
-						.getEstimate();
-				final int correspondingReqID = focusedReq
-						.getCorrespondingReqManagerID();
-				focusedReq.setFinalEstimate(estimate);
+			public void keyPressed(KeyEvent e) {
+				keyTyped(e);
 
-				// Update the Requirement manager requirement estimate.
-				final Requirement focusedRequirementManagerRequirement = reqManagerRequirementModel
-						.getRequirement(correspondingReqID);
-				focusedRequirementManagerRequirement.setEstimate(estimate);
-
-				parentPanel.getSession().save();
-				UpdateRequirementController.getInstance().updateRequirement(
-						focusedRequirementManagerRequirement);
-				ViewEventController.getInstance().refreshTable();
-				ViewEventController.getInstance().refreshTree();
 			}
 
+			@Override
+			public void keyReleased(KeyEvent e) {
+				keyTyped(e);
+
+			}
+
+			@Override
+			public void keyTyped(KeyEvent e) {
+				try {
+					Integer.parseInt(card.getTextField().getText());
+					parentPanel.getSubmitFinalEstimationButton().setEnabled(true);
+				} catch (NumberFormatException n) {
+					parentPanel.getSubmitFinalEstimationButton().setEnabled(false);
+				}
+
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					JButton submitButton = parentPanel.getSubmitFinalEstimationButton();
+					submitButton.doClick();
+				}
+			}
 		});
-
-		pnlFinalEstimate.add(lblFinalEstimate);
-		pnlFinalEstimate.add(verticalStrut);
-		pnlFinalEstimate.add(finalEstimateField);
-		pnlFinalEstimate.add(btnFinalEstimate);
-
-		// Create the Stats Panel
-		statNameFont = new Font("TimesRoman", Font.BOLD, 15);
-
-		lblMean = new JLabel("Mean");
-		lblMean.setFont(statNameFont);
-		lblMean.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMean = new JTextField(10);
-		// Keeps the text box from filling the entire statBox
-		statsMean.setMaximumSize(statsMean.getPreferredSize());
-		statsMean.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMean.setEditable(false);
-
-		lblMedian = new JLabel("Median");
-		lblMedian.setFont(statNameFont);
-		lblMedian.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMedian = new JTextField(10);
-		// Keeps the text box from filling the entire statBox
-		statsMedian.setMaximumSize(statsMedian.getPreferredSize());
-		statsMedian.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMedian.setEditable(false);
-
-		lblMode = new JLabel("Mode");
-		lblMode.setFont(statNameFont);
-		lblMode.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMode = new JTextField(10);
-		// Keeps the text box from filling the entire statBox
-		statsMode.setMaximumSize(statsMode.getPreferredSize());
-		statsMode.setAlignmentX(Component.CENTER_ALIGNMENT);
-		statsMode.setEditable(false);
-
-		pnlStats.add(lblStats);
-
-		pnlStats.add(lblMean);
-		pnlStats.add(statsMean);
-
-		pnlStats.add(lblMedian);
-		pnlStats.add(statsMedian);
-
-		pnlStats.add(lblMode);
-		pnlStats.add(statsMode);
-
-		// put the completed Session panel together
-		this.add(pnlVotes);
-		this.add(pnlStats);
-		this.add(pnlFinalEstimate);
-		this.createTable();
-		final JScrollPane votesScrollPane = new JScrollPane(tblVotes);
-		tblVotes.setFillsViewportHeight(true);
-		pnlVotes.add(lblVotes);
-		pnlVotes.add(votesScrollPane);
-
+		// TODO move this code to Vote panel
+//
+//		final Component verticalStrut = Box.createVerticalStrut(50);
+//
+//		// Confirm message
+//		final JLabel successMsg = new JLabel("Final Estimation Submitted.");
+//		successMsg.setAlignmentY(Component.CENTER_ALIGNMENT);
+//		successMsg.setVisible(false);
+		
+		// Create a stats table
+		statsTable = new StatsTable();
+		
+		putGUIComponentsOnPanel();
 	}
 
-	public void createTable() {
-		tableModel = new DefaultTableModel(new Object[0][0],
-				voteTableColHeaders);
-		tblVotes = new JTable(tableModel) {
-			private static final long serialVersionUID = -1948465013583690161L;
+	private void putGUIComponentsOnPanel() {
+		setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		setLayout(new MigLayout("insets 0, fill", "push[]20[]push", "push[]push"));
 
-			@Override
-			// disables the ability to edit cells
-			public boolean isCellEditable(int row, int column) {
-				// all cells false
-				return false;
-			}
-		};
-	}
-
-	/**
-	 * sets the text field for Mean in the completed session view.
-	 * 
-	 * @param statsMean
-	 */
-	public void setStatsMean(int statsMean) {
-		this.statsMean.setText("" + statsMean + "  ");
-	}
-
-	/**
-	 * sets the text field for Median in the completed session view.
-	 * 
-	 * @param statsMedian
-	 */
-	public void setStatsMedian(int statsMedian) {
-		this.statsMedian.setText("" + statsMedian + "  ");
-	}
-
-	/**
-	 * sets the text field for Mode in the completed session view.
-	 * 
-	 * @param statsMode
-	 */
-	public void setStatsMode(int statsMode) {
-		this.statsMode.setText("" + statsMode + "  ");
-	}
-
-	/**
-	 * Populates the vote table with the votes from a requirement
-	 * 
-	 * @param requirement
-	 *            The requirement whose votes to use for this table
-	 */
-	public void fillTable(PlanningPokerRequirement requirement) {
-		// Clear the table model.
-		tableModel.setRowCount(0);
-
-		for (PlanningPokerVote vote : requirement.getVotes()) {
-			Object[] row = { vote.getUser(), vote.getCardValue() };
-			tableModel.addRow(row);
-		}
+		add(card, "height 194!, width 146!");
+		add(statsTable, "wrap, gapright 3");
+		
+//		pnlFinishedReq.add(lblFinalEstimate, "gapbottom 10,wrap");
+//		pnlFinishedReq.add(finalEstimateCard,
+//				"height 194!, width 146!, gapright 80px");
+//		pnlFinishedReq.add(pnlStats);
+//
+//		this.add(pnlFinishedReq);
 	}
 
 	/**
@@ -352,8 +194,12 @@ public class CompletedSessionEstimatePanel extends JPanel {
 	 *            The new focused requirement
 	 */
 	public void updateEstimateTextField(PlanningPokerRequirement requirement) {
-		finalEstimateField.setText(Integer.valueOf(
-				requirement.getFinalEstimate()).toString());
+		int end = requirement.getFinalEstimate();
+		if (end != 0) {
+			card.setTextMiddle(Integer.valueOf(requirement.getFinalEstimate()).toString());
+		} else {
+			card.setTextMiddle("");
+		}
 	}
 
 	/**
@@ -376,9 +222,44 @@ public class CompletedSessionEstimatePanel extends JPanel {
 	 * @return The estimate as parsed from the textbox
 	 */
 	public int getEstimate() {
-		final String estimateText = finalEstimateField.getText();
+		final String estimateText = card.getTextMiddle();
 		return Integer.parseInt(estimateText);
 	}
 	
-
+	/**
+	 * Assign a value to the mean
+	 * @param A value that would be assigned
+	 * to the mean of the stats table
+	 */
+	public void setMean(double mean) {
+		statsTable.setMean(mean + "");
+	}
+	
+	/**
+	 * Assign a value to the median
+	 * @param A value that would be assigned
+	 * to the median of the stats table
+	 */
+	public void setMedian(int median) {
+		statsTable.setMedian(median + "");
+	}
+	
+	/**
+	 * Assign a value to the mode
+	 * @param A value that would be assigned
+	 * to the mode of the stats table
+	 */
+	public void setMode(int mode) {
+		statsTable.setMode(mode + "");
+	}
+	
+	/**
+	 * Assign a value to the standard deviation
+	 * @param A value that would be assigned
+	 * to the standard deviation of the stats table
+	 */
+	public void setStandardDeviation(double sd) {
+		statsTable.setStandardDeviation(sd + "");
+	}
+	
 }
